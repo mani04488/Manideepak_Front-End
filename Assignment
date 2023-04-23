@@ -1,0 +1,83 @@
+1)The simple List component is a React component that displays a list of items. It consists of two sub-components, SingleListItem and List.
+
+*The SingleListItem component represents a single item in the list. It takes four props: index (number), isSelected (boolean), onClickHandler (function), and text (string). It renders an li element with a text prop as its content. The background color of the li element is determined by the isSelected prop, where it is set to 'green' if true and 'red' if false. It also invokes the onClickHandler prop when clicked, passing the index prop as an argument.
+
+*The List component is the main list component that renders a list of SingleListItem components. It takes an array of items prop, which should be an array of objects with a text property as its shape. It uses the useState hook to manage the selectedIndex state, which represents the currently selected item index. It uses the useEffect hook to reset the selectedIndex state whenever the items prop changes. It also defines a handleClick function that updates the selectedIndex state when a list item is clicked. The List component renders an unordered list (ul) element with each item in the items prop mapped to a SingleListItem component. It passes the necessary props to the SingleListItem component, such as onClickHandler, text, index, and isSelected.
+
+
+
+
+2)The problems and warnings with the code:
+
+*In the SingleListItem component, the onClickHandler prop is not being properly passed to the onClick event. It should be wrapped in an arrow function or a callback function to prevent it from being invoked during rendering. Fix it by updating the onClick event to: onClick={() => onClickHandler(index)}.
+
+*In the WrappedListComponent component, the useState hook is being used incorrectly. The setSelectedIndex function is being assigned to selectedIndex instead of the initial value. Fix it by updating the useState line to: const [selectedIndex, setSelectedIndex] = useState(null);.
+
+*The items prop in WrappedListComponent is not being properly validated. The PropTypes.array should be PropTypes.arrayOf and the shape of the object inside the array should be defined using PropTypes.shape, not PropTypes.shapeOf. Fix it by updating the propTypes definition to: items: PropTypes.arrayOf(PropTypes.shape({ text: PropTypes.string.isRequired })).
+
+*The WrappedListComponent component's defaultProps is not properly defined. items should be set to an empty array [] instead of null. Fix it by updating the defaultProps definition to: items: [].
+
+*The SingleListItem and WrappedListComponent components are wrapped in the memo higher-order component (HOC) to optimize performance by preventing unnecessary re-renders. However, the usage of memo is incorrect. memo should be called with the actual component, not the wrapped component. Fix it by updating the usage of memo to: const SingleListItem = memo(WrappedSingleListItem); and const List = memo(WrappedListComponent);.
+
+
+
+3)The modified code
+
+import React, { useState, useEffect, memo } from 'react';
+import PropTypes from 'prop-types';
+
+
+const SingleListItem = memo(({ index, isSelected, onClickHandler, text }) => {
+  return (
+    <li
+      style={{ backgroundColor: isSelected ? 'green' : 'red'}}
+      onClick={() => onClickHandler(index)}
+    >
+      {text}
+    </li>
+  );
+});
+
+SingleListItem.propTypes = {
+  index: PropTypes.number,
+  isSelected: PropTypes.bool,
+  onClickHandler: PropTypes.func.isRequired,
+  text: PropTypes.string.isRequired,
+};
+
+
+const List = memo(({ items }) => {
+  const [selectedIndex, setSelectedIndex] = useState(null);
+
+  useEffect(() => {
+    setSelectedIndex(null);
+  }, [items]);
+
+  const handleClick = index => {
+    setSelectedIndex(index);
+  };
+
+  return (
+    <ul style={{ textAlign: 'left' }}>
+      {items.map((item, index) => (
+        <SingleListItem
+          key={index}
+          onClickHandler={() => handleClick(index)}
+          text={item.text}
+          index={index}
+          isSelected={selectedIndex === index}
+        />
+      ))}
+    </ul>
+  );
+});
+
+List.propTypes = {
+  items: PropTypes.arrayOf(PropTypes.shape({ text: PropTypes.string.isRequired })),
+};
+
+List.defaultProps = {
+  items: [],
+};
+
+export default List;
